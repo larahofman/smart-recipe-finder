@@ -87,9 +87,14 @@ project-root/
 
 │ └── index.html # Frontend UI
 
-├── training/
+├── Yolo model/
 
-│ └── yolo_training.py # YOLO model training scripts
+│ └── fix.py # correct or modify specific aspects of the dataset, labels, or configurations 
+│ └──main_auto.py #auto labeling 
+│ └──main.py #primary script for code execution
+│ └──split.py #Split into train, validation, test 
+│ └──train.py #Training folder 
+│ └──Jamilya.yaml #dataset configuration file for YOLO training 
 
 ├── processing/
 
@@ -250,8 +255,8 @@ http://127.0.0.1:5000/
 
 ---
 ## How to train
-### 1. Open Dataset
-  
+### 1. Download Dataset from 
+  https://drive.google.com/drive/folders/14mBl92Zd6MF7xBgu8cNMq2ylbZcm17cy?usp=sharing
 
 ---
 
