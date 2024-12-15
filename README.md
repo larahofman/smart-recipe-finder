@@ -91,9 +91,9 @@ project-root/
 
 │ └── fix.py # correct or modify specific aspects of the dataset, labels, or configurations 
 │ └──main_auto.py #auto labeling 
-│ └──main.py #primary script for code execution
+│ └──main.py #mannual labeling 
 │ └──split.py #Split into train, validation, test 
-│ └──train.py #Training folder 
+│ └──train.py #Training script 
 │ └──Jamilya.yaml #dataset configuration file for YOLO training 
 
 ├── processing/
