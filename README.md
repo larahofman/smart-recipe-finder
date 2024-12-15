@@ -179,7 +179,7 @@ Follow these steps to run the **Smart Recipe Finder** locally:
 
 ```bash
 
-git clone https://github.com/your_username/recipe-suggestion-yolo.git
+git clone https://github.com/larahofman/smart-recipe-finder/tree/main
 
 cd recipe-suggestion-yolo/application
 
