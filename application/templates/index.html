@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Recipe Finder</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f9f9f9;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #007bff;
+        }
+        form {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin: 10px 0 5px;
+        }
+        input, select, button {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .results {
+            margin-top: 20px;
+        }
+        .recipe {
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            padding: 10px;
+            cursor: pointer;
+        }
+        .recipe:hover {
+            background-color: #f0f8ff;
+        }
+        .recipe-details {
+            display: none;
+            margin-top: 10px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+        ol {
+            padding-left: 20px;
+        }
+        .image-preview {
+            text-align: center;
+            margin: 20px 0;
+        }
+        .image-preview img {
+            max-height: 300px;
+            max-width: 100%;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .servings-control {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Smart Recipe Finder</h1>
+
+        <!-- Upload or Take a Photo -->
+        <form id="upload-form">
+            <label for="image">Upload an Image:</label>
+            <input type="file" id="image" name="image" accept="image/*">
+            <button type="submit">Detect Ingredients</button>
+        </form>
+
+        <!-- Image Preview -->
+        <div class="image-preview" id="image-preview" style="display: none;">
+            <h3>Uploaded Image:</h3>
+            <img id="preview-img" src="" alt="Preview">
+            <div id="detected-ingredients-list">Existing Ingredients: None</div>
+        </div>
+
+        <!-- Manually Add Ingredients -->
+        <form id="manual-ingredient-form">
+            <label for="manual-ingredient">Add Ingredient Manually:</label>
+            <input type="text" id="manual-ingredient" name="manual-ingredient" placeholder="Enter ingredient">
+            <button type="button" onclick="addIngredient()">Add Ingredient</button>
+        </form>
+
+        <!-- Recipe Search -->
+        <form id="recipe-form" style="display:none;">
+            <label for="category">Select Meal Type:</label>
+            <select id="category" name="category">
+                <option value="Appetizers">Appetizers</option>
+                <option value="Side Dishes">Side Dishes</option>
+                <option value="Main Dish">Main Dishes</option>
+                <option value="Desserts">Desserts</option>
+            </select>
+            <label for="time_limit">Max Cooking Time (minutes):</label>
+            <input type="number" id="time_limit" name="time_limit" value="45" required>
+            <button type="submit">Find Recipes</button>
+        </form>
+
+        <!-- Results -->
+        <div class="results" id="results" style="display:none;">
+            <h2>Matching Recipes:</h2>
+            <div id="recipes-list"></div>
+        </div>
+    </div>
+
+    <script>
+        let detectedIngredients = [];
+
+        window.onload = function() {
+            localStorage.removeItem('detectedIngredients');
+            detectedIngredients = [];
+            document.getElementById('detected-ingredients-list').innerText = 'Detected Ingredients: None';
+            document.getElementById('recipe-form').style.display = 'none';
+        };
+
+        function saveIngredients() {
+            localStorage.setItem('detectedIngredients', JSON.stringify(detectedIngredients));
+        }
+
+        function addIngredient() {
+            const ingredientInput = document.getElementById('manual-ingredient');
+            const ingredient = ingredientInput.value.trim();
+            if (ingredient) {
+                detectedIngredients.push(ingredient);
+                document.getElementById('detected-ingredients-list').innerText = 'Detected Ingredients: ' + detectedIngredients.join(', ');
+                ingredientInput.value = '';
+                document.getElementById('recipe-form').style.display = 'block';
+                saveIngredients();
+            }
+        }
+
+        document.getElementById('upload-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const formData = new FormData();
+            const image = document.getElementById('image').files[0];
+
+            if (image) {
+                formData.append('image', image);
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('preview-img').src = e.target.result;
+                    document.getElementById('image-preview').style.display = 'block';
+                };
+                reader.readAsDataURL(image);
+            } else {
+                alert('Please upload an image');
+                return;
+            }
+
+            const response = await fetch('/detect', { method: 'POST', body: formData });
+            const data = await response.json();
+            detectedIngredients = [...new Set([...detectedIngredients, ...data.detected])];
+            document.getElementById('detected-ingredients-list').innerText = 'Detected Ingredients: ' + detectedIngredients.join(', ');
+            document.getElementById('recipe-form').style.display = 'block';
+            saveIngredients();
+        });
+
+        document.getElementById('recipe-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const formData = {
+                detected_ingredients: detectedIngredients,
+                manual_ingredients: detectedIngredients,
+                time_limit: document.getElementById('time_limit').value,
+                category: document.getElementById('category').value
+            };
+        
+            const response = await fetch('/recipes', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData)
+            });
+            const data = await response.json();
+        
+            const recipesList = document.getElementById('recipes-list');
+            const suggestionsList = document.getElementById('suggestions-list');
+            recipesList.innerHTML = '';
+        
+            if (data.recipes && data.recipes.length > 0) {
+                document.getElementById('results').style.display = 'block';
+                data.recipes.forEach((recipe, index) => {
+                    const recipeDiv = document.createElement('div');
+                    recipeDiv.classList.add('recipe');
+                    recipeDiv.innerHTML = `<strong>${recipe.Name}</strong>`;
+                    recipeDiv.addEventListener('click', function(e) {
+                        if (e.target.tagName === 'INPUT') return;
+        
+                        const details = this.querySelector('.recipe-details');
+                        if (details) {
+                            details.style.display = details.style.display === 'none' ? 'block' : 'none';
+                        } else {
+                            const detailsDiv = document.createElement('div');
+                            detailsDiv.classList.add('recipe-details');
+                            detailsDiv.innerHTML = `
+                                <h4>Adjust Servings:</h4>
+                                <input type="number" id="servings-${index}" value="${recipe.Servings}" style="width: 80px;">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Ingredient</th>
+                                            <th>Quantity</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="ingredients-${index}">
+                                        ${recipe.AdjustedIngredients.map(i => `<tr><td>${i.Ingredient}</td><td>${i.Quantity}</td></tr>`).join('')}
+                                    </tbody>
+                                </table>
+                                <h3>Steps:</h3>
+                                <ol>${recipe.Steps.map(step => `<li>${step}</li>`).join('')}</ol>
+                            `;
+                            this.appendChild(detailsDiv);
+        
+                            document.getElementById(`servings-${index}`).addEventListener('change', async function() {
+                                const newServings = this.value;
+                                const response = await fetch('/adjust_quantities', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ recipe_name: recipe.Name, original_servings: recipe.Servings, new_servings: newServings })
+                                });
+                                const data = await response.json();
+                                const ingredientsTable = document.getElementById(`ingredients-${index}`);
+                                ingredientsTable.innerHTML = data.AdjustedIngredients.map(i => `<tr><td>${i.Ingredient}</td><td>${i.Quantity}</td></tr>`).join('');
+                            });
+                        }
+                    });
+                    recipesList.appendChild(recipeDiv);
+                });
+            }
+        
+        });
+    </script>
+</body>
+</html>
