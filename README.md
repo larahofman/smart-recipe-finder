@@ -251,7 +251,11 @@ http://127.0.0.1:5000/
 
 -  **Annotations**: YOLO-annotated images (showing detection results) are saved in the `annotations/` folder.
 
-  
+---
+
+### Examples 
+
+- You can find some of the examples of photos that we use to try our application in the `uploads/` folder.
 
 ---
 ## How to train
